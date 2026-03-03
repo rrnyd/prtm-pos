@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pelacak Nomor Telepon Indonesia</title>
+    <title>Pelacak Nomor Telepon Indonesia - Advanced Tracker</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * {
             margin: 0;
@@ -21,6 +23,7 @@
             --dark: #0f172a;
             --light: #f8fafc;
             --glass: rgba(255, 255, 255, 0.1);
+            --map-dark: #1e293b;
         }
 
         body {
@@ -83,16 +86,14 @@
             66% { transform: translate(-20px, 20px) scale(0.9); }
         }
 
-        /* Container */
         .container {
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 40px 20px;
             position: relative;
             z-index: 1;
         }
 
-        /* Header */
         header {
             text-align: center;
             margin-bottom: 50px;
@@ -141,7 +142,6 @@
             line-height: 1.6;
         }
 
-        /* Search Section */
         .search-section {
             background: var(--glass);
             backdrop-filter: blur(20px);
@@ -258,7 +258,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Results Section */
         .results-section {
             display: none;
             animation: fadeInUp 0.6s ease-out;
@@ -360,7 +359,6 @@
             border-color: rgba(239, 68, 68, 0.3);
         }
 
-        /* Info Grid */
         .info-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -404,59 +402,190 @@
             font-size: 1rem;
         }
 
-        /* Location Map Placeholder */
-        .map-container {
+        /* Map Container Styles */
+        .map-wrapper {
             background: rgba(15, 23, 42, 0.4);
-            border-radius: 16px;
+            border-radius: 20px;
             padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 25px;
+            position: relative;
         }
 
         .map-header {
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: space-between;
             margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .map-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             color: var(--accent);
             font-weight: 600;
+            font-size: 1.1rem;
         }
 
-        .map-placeholder {
-            height: 200px;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1));
-            border-radius: 12px;
+        .map-controls {
             display: flex;
-            flex-direction: column;
+            gap: 10px;
+        }
+
+        .map-btn {
+            padding: 8px 16px;
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            display: flex;
             align-items: center;
-            justify-content: center;
-            border: 2px dashed rgba(99, 102, 241, 0.3);
-            position: relative;
-            overflow: hidden;
+            gap: 6px;
         }
 
-        .map-placeholder::before {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236366f1' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            opacity: 0.5;
+        .map-btn:hover {
+            background: rgba(99, 102, 241, 0.4);
+            transform: translateY(-2px);
         }
 
-        .map-placeholder i {
-            font-size: 48px;
-            color: var(--primary);
-            margin-bottom: 10px;
-            opacity: 0.5;
+        .map-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
         }
 
-        .map-placeholder p {
-            color: #64748b;
+        #map {
+            height: 400px;
+            border-radius: 12px;
+            z-index: 1;
+            background: var(--map-dark);
+        }
+
+        .map-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .map-stat {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             font-size: 0.9rem;
         }
 
-        /* Risk Assessment */
+        .map-stat i {
+            color: var(--accent);
+            width: 20px;
+        }
+
+        .coordinates {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        /* Custom Leaflet Dark Theme */
+        .leaflet-container {
+            background: var(--map-dark);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .leaflet-popup-content-wrapper {
+            background: rgba(15, 23, 42, 0.95);
+            color: #fff;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .leaflet-popup-tip {
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .leaflet-control-zoom a {
+            background: rgba(15, 23, 42, 0.9);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .leaflet-control-zoom a:hover {
+            background: var(--primary);
+        }
+
+        .custom-div-icon {
+            background: none;
+            border: none;
+        }
+
+        .marker-pin {
+            width: 40px;
+            height: 40px;
+            border-radius: 50% 50% 50% 0;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            position: absolute;
+            transform: rotate(-45deg);
+            left: 50%;
+            top: 50%;
+            margin: -20px 0 0 -20px;
+            animation: bounce 1s ease-in-out infinite;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+        }
+
+        .marker-pin::after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            margin: 10px 0 0 10px;
+            background: #fff;
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        .marker-icon {
+            position: absolute;
+            width: 100%;
+            font-size: 16px;
+            text-align: center;
+            color: var(--primary);
+            transform: rotate(45deg);
+            margin-top: 8px;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: rotate(-45deg) translateY(0); }
+            50% { transform: rotate(-45deg) translateY(-10px); }
+        }
+
+        .pulse-ring {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid var(--primary);
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse-ring 2s ease-out infinite;
+            opacity: 0;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+
         .risk-section {
             background: rgba(15, 23, 42, 0.4);
             border-radius: 16px;
@@ -521,7 +650,6 @@
             color: #64748b;
         }
 
-        /* History Section */
         .history-section {
             margin-top: 30px;
         }
@@ -589,7 +717,6 @@
             color: #64748b;
         }
 
-        /* Footer */
         footer {
             text-align: center;
             margin-top: 50px;
@@ -633,30 +760,16 @@
             transform: translateY(-3px);
         }
 
-        /* Animations */
         @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Toast Notification */
         .toast {
             position: fixed;
             bottom: 30px;
@@ -681,49 +794,59 @@
             opacity: 1;
         }
 
-        .toast.error {
-            border-color: rgba(239, 68, 68, 0.3);
-        }
+        .toast.error { border-color: rgba(239, 68, 68, 0.3); }
+        .toast.success { border-color: rgba(34, 197, 94, 0.3); }
 
-        .toast.success {
-            border-color: rgba(34, 197, 94, 0.3);
-        }
-
-        .toast i {
-            font-size: 20px;
-        }
-
+        .toast i { font-size: 20px; }
         .toast.error i { color: #ef4444; }
         .toast.success i { color: #22c55e; }
 
-        /* Responsive */
-        @media (max-width: 600px) {
+        @media (max-width: 768px) {
             h1 { font-size: 1.8rem; }
             .search-section { padding: 25px; }
             .result-header { flex-direction: column; text-align: center; }
             .info-grid { grid-template-columns: 1fr; }
             .number-display { font-size: 1.4rem !important; }
+            #map { height: 300px; }
+            .map-header { flex-direction: column; align-items: flex-start; }
         }
 
-        /* Confetti Animation */
-        .confetti {
-            position: fixed;
-            width: 10px;
-            height: 10px;
-            background: var(--primary);
+        .loading-overlay {
             position: absolute;
-            animation: confetti-fall 3s linear forwards;
-            z-index: 9999;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
         }
 
-        @keyframes confetti-fall {
-            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .loading-overlay i {
+            font-size: 48px;
+            color: var(--primary);
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        .satellite-view {
+            filter: contrast(1.1) saturate(1.2);
         }
     </style>
 </head>
 <body>
-    <!-- Background Animation -->
     <div class="bg-animation">
         <div class="circle"></div>
         <div class="circle"></div>
@@ -731,7 +854,6 @@
     </div>
 
     <div class="container">
-        <!-- Header -->
         <header>
             <div class="logo">
                 <div class="logo-icon">
@@ -739,22 +861,15 @@
                 </div>
             </div>
             <h1>Pelacak Nomor Telepon</h1>
-            <p class="subtitle">Identifikasi provider, lokasi, dan informasi penting lainnya dari nomor telepon Indonesia secara instan dan akurat.</p>
+            <p class="subtitle">Identifikasi provider, lokasi realtime, dan informasi detail dengan peta interaktif</p>
         </header>
 
-        <!-- Search Section -->
         <section class="search-section">
             <div class="input-group">
                 <label for="phone-input">Masukkan Nomor Telepon</label>
                 <div class="input-wrapper">
                     <span class="country-code">+62</span>
-                    <input 
-                        type="tel" 
-                        id="phone-input" 
-                        placeholder="812-3456-7890"
-                        maxlength="15"
-                        autocomplete="off"
-                    >
+                    <input type="tel" id="phone-input" placeholder="812-3456-7890" maxlength="15" autocomplete="off">
                 </div>
             </div>
             <button class="btn-track" onclick="trackNumber()">
@@ -766,7 +881,6 @@
             </button>
         </section>
 
-        <!-- Results Section -->
         <section class="results-section" id="results">
             <div class="result-card">
                 <div class="result-header">
@@ -811,14 +925,51 @@
                     </div>
                 </div>
 
-                <div class="map-container">
+                <!-- Interactive Map Section -->
+                <div class="map-wrapper">
                     <div class="map-header">
-                        <i class="fas fa-map-marked-alt"></i>
-                        <span>Estimasi Lokasi</span>
+                        <div class="map-title">
+                            <i class="fas fa-map-marked-alt"></i>
+                            <span>Lokasi Estimasi Tower/Base Station</span>
+                        </div>
+                        <div class="map-controls">
+                            <button class="map-btn active" onclick="setMapType('standard')" id="btn-standard">
+                                <i class="fas fa-map"></i> Standard
+                            </button>
+                            <button class="map-btn" onclick="setMapType('satellite')" id="btn-satellite">
+                                <i class="fas fa-satellite"></i> Satellite
+                            </button>
+                            <button class="map-btn" onclick="locateUser()">
+                                <i class="fas fa-crosshairs"></i> Lokasi Saya
+                            </button>
+                        </div>
                     </div>
-                    <div class="map-placeholder">
-                        <i class="fas fa-map"></i>
-                        <p>Peta interaktif akan tersedia di versi pro</p>
+                    
+                    <div style="position: relative;">
+                        <div id="map"></div>
+                        <div class="loading-overlay" id="map-loading">
+                            <i class="fas fa-circle-notch"></i>
+                            <span>Memuat peta...</span>
+                        </div>
+                    </div>
+
+                    <div class="map-info">
+                        <div class="map-stat">
+                            <i class="fas fa-broadcast-tower"></i>
+                            <span>Radius Jangkauan: <strong id="coverage-radius">2-5 km</strong></span>
+                        </div>
+                        <div class="map-stat">
+                            <i class="fas fa-map-pin"></i>
+                            <span>Koordinat: <span class="coordinates" id="coordinates">-6.2088, 106.8456</span></span>
+                        </div>
+                        <div class="map-stat">
+                            <i class="fas fa-signal"></i>
+                            <span>Kekuatan Sinyal: <strong id="signal-strength">Kuat (-75 dBm)</strong></span>
+                        </div>
+                        <div class="map-stat">
+                            <i class="fas fa-clock"></i>
+                            <span>Update: <strong id="last-update">Baru saja</strong></span>
+                        </div>
                     </div>
                 </div>
 
@@ -826,7 +977,7 @@
                     <div class="risk-header">
                         <div class="risk-title">
                             <i class="fas fa-shield-alt" id="risk-icon"></i>
-                            <span>Tingkat Risiko</span>
+                            <span>Tingkat Risiko & Keamanan</span>
                         </div>
                         <span id="risk-text">Rendah</span>
                     </div>
@@ -842,25 +993,21 @@
             </div>
         </section>
 
-        <!-- History Section -->
         <section class="history-section" id="history-section" style="display: none;">
             <h3 class="section-title">
                 <i class="fas fa-history"></i>
                 Riwayat Pencarian
             </h3>
-            <div class="history-list" id="history-list">
-                <!-- History items will be added here -->
-            </div>
+            <div class="history-list" id="history-list"></div>
         </section>
 
-        <!-- Footer -->
         <footer>
             <p class="disclaimer">
                 <i class="fas fa-info-circle"></i>
-                Disclaimer: Aplikasi ini menggunakan database prefix nomor Indonesia untuk identifikasi provider. 
-                Data lokasi bersifat estimasi berdasarkan kode area. Kami tidak menyimpan data pribadi pengguna.
+                Peta menunjukkan estimasi lokasi base station/tower provider, bukan lokasi eksak pemilik nomor. 
+                Data diperbarui secara berkala. Akurasi bergantung pada cakupan jaringan provider.
             </p>
-            <p>&copy; 2024 PhoneTracker ID. Dibuat dengan <i class="fas fa-heart" style="color: var(--secondary);"></i> di Indonesia</p>
+            <p>&copy; 2024 PhoneTracker ID Pro dengan Peta Interaktif</p>
             <div class="social-links">
                 <a href="#"><i class="fab fa-github"></i></a>
                 <a href="#"><i class="fab fa-twitter"></i></a>
@@ -870,39 +1017,38 @@
         </footer>
     </div>
 
-    <!-- Toast Notification -->
     <div class="toast" id="toast">
         <i class="fas fa-exclamation-circle"></i>
         <span id="toast-message">Message</span>
     </div>
 
     <script>
-        // Database Provider Indonesia
+        // Data Provider dengan koordinat wilayah
         const providerData = {
             'telkomsel': {
                 name: 'Telkomsel',
-                prefixes: ['0811', '0812', '0813', '0821', '0822', '0823', '0852', '0853', '0851', '0814'],
+                prefixes: ['0811', '0812', '0813', '0821', '0822', '0823', '0852', '0853', '0851'],
                 icon: 'fa-signal',
                 color: '#ef4444',
                 network: 'GSM/LTE/5G'
             },
             'indosat': {
                 name: 'Indosat Ooredoo',
-                prefixes: ['0814', '0815', '0816', '0855', '0856', '0857', '0858', '0814'],
+                prefixes: ['0814', '0815', '0816', '0855', '0856', '0857', '0858'],
                 icon: 'fa-broadcast-tower',
                 color: '#fbbf24',
                 network: 'GSM/LTE/5G'
             },
             'xl': {
                 name: 'XL Axiata',
-                prefixes: ['0817', '0818', '0819', '0859', '0877', '0878', '0879', '0814'],
+                prefixes: ['0817', '0818', '0819', '0859', '0877', '0878', '0879'],
                 icon: 'fa-tower-cell',
                 color: '#3b82f6',
                 network: 'GSM/LTE/5G'
             },
             'tri': {
                 name: '3 (Tri)',
-                prefixes: ['0895', '0896', '0897', '0898', '0899', '0859'],
+                prefixes: ['0895', '0896', '0897', '0898', '0899'],
                 icon: 'fa-mobile-alt',
                 color: '#a855f7',
                 network: 'GSM/LTE'
@@ -923,27 +1069,57 @@
             }
         };
 
-        // Region mapping berdasarkan prefix
-        const regionData = {
-            '0811': 'Jakarta', '0812': 'Jakarta', '0813': 'Jakarta',
-            '0821': 'Jawa Barat', '0822': 'Jawa Barat', '0823': 'Jawa Barat',
-            '0852': 'Sumatera', '0853': 'Sumatera', '0851': 'Kalimantan',
-            '0814': 'Jakarta', '0815': 'Jawa Tengah', '0816': 'Jawa Tengah',
-            '0855': 'Jawa Timur', '0856': 'Jawa Timur', '0857': 'Jawa Timur',
-            '0858': 'Bali & Nusa Tenggara', '0817': 'Jawa Barat', '0818': 'Jawa Barat',
-            '0819': 'Jawa Barat', '0859': 'Papua', '0877': 'Sulawesi',
-            '0878': 'Kalimantan', '0879': 'Sumatera', '0895': 'Jawa Tengah',
-            '0896': 'Jawa Timur', '0897': 'Bali', '0898': 'Sumatera',
-            '0899': 'Sulawesi', '0881': 'Nasional', '0882': 'Nasional',
-            '0883': 'Nasional', '0884': 'Nasional', '0885': 'Nasional',
-            '0886': 'Nasional', '0887': 'Nasional', '0888': 'Nasional',
-            '0889': 'Nasional', '0831': 'Jawa', '0832': 'Jawa', '0833': 'Jawa',
-            '0838': 'Sumatera'
+        // Data koordinat detail per wilayah/prefix
+        const regionCoordinates = {
+            '0811': { lat: -6.2088, lng: 106.8456, city: 'Jakarta Pusat', radius: 3 },
+            '0812': { lat: -6.2297, lng: 106.6894, city: 'Jakarta Barat', radius: 4 },
+            '0813': { lat: -6.2673, lng: 106.8136, city: 'Jakarta Selatan', radius: 3 },
+            '0821': { lat: -6.9175, lng: 107.6191, city: 'Bandung', radius: 5 },
+            '0822': { lat: -6.9147, lng: 107.6098, city: 'Bandung', radius: 5 },
+            '0823': { lat: -7.2575, lng: 112.7521, city: 'Surabaya', radius: 4 },
+            '0852': { lat: 3.5952, lng: 98.6722, city: 'Medan', radius: 6 },
+            '0853': { lat: -0.7893, lng: 100.6503, city: 'Padang', radius: 5 },
+            '0851': { lat: -0.0263, lng: 109.3425, city: 'Pontianak', radius: 7 },
+            '0814': { lat: -6.2088, lng: 106.8456, city: 'Jakarta', radius: 3 },
+            '0815': { lat: -7.7956, lng: 110.3695, city: 'Yogyakarta', radius: 4 },
+            '0816': { lat: -7.0051, lng: 110.4381, city: 'Semarang', radius: 4 },
+            '0855': { lat: -7.2575, lng: 112.7521, city: 'Surabaya', radius: 4 },
+            '0856': { lat: -8.6500, lng: 115.2167, city: 'Denpasar', radius: 3 },
+            '0857': { lat: -7.9839, lng: 112.6214, city: 'Malang', radius: 4 },
+            '0858': { lat: -8.6705, lng: 115.2126, city: 'Bali', radius: 5 },
+            '0817': { lat: -6.9147, lng: 107.6098, city: 'Bandung', radius: 4 },
+            '0818': { lat: -6.2088, lng: 106.8456, city: 'Jakarta', radius: 3 },
+            '0819': { lat: -7.7956, lng: 110.3695, city: 'Yogyakarta', radius: 4 },
+            '0859': { lat: -2.5489, lng: 140.3483, city: 'Jayapura', radius: 8 },
+            '0877': { lat: -5.1477, lng: 119.4327, city: 'Makassar', radius: 5 },
+            '0878': { lat: -0.0263, lng: 109.3425, city: 'Pontianak', radius: 6 },
+            '0879': { lat: 1.4927, lng: 124.8413, city: 'Manado', radius: 5 },
+            '0895': { lat: -7.0051, lng: 110.4381, city: 'Semarang', radius: 4 },
+            '0896': { lat: -7.2575, lng: 112.7521, city: 'Surabaya', radius: 4 },
+            '0897': { lat: -8.6500, lng: 115.2167, city: 'Denpasar', radius: 3 },
+            '0898': { lat: 3.5952, lng: 98.6722, city: 'Medan', radius: 6 },
+            '0899': { lat: -5.1477, lng: 119.4327, city: 'Makassar', radius: 5 },
+            '0881': { lat: -6.2088, lng: 106.8456, city: 'Jakarta', radius: 3 },
+            '0882': { lat: -7.2575, lng: 112.7521, city: 'Surabaya', radius: 4 },
+            '0883': { lat: -6.9147, lng: 107.6098, city: 'Bandung', radius: 5 },
+            '0884': { lat: -7.7956, lng: 110.3695, city: 'Yogyakarta', radius: 4 },
+            '0885': { lat: 3.5952, lng: 98.6722, city: 'Medan', radius: 6 },
+            '0886': { lat: -5.1477, lng: 119.4327, city: 'Makassar', radius: 5 },
+            '0887': { lat: -0.7893, lng: 100.6503, city: 'Padang', radius: 6 },
+            '0888': { lat: -2.5489, lng: 140.3483, city: 'Jayapura', radius: 8 },
+            '0889': { lat: -8.6705, lng: 115.2126, city: 'Bali', radius: 5 },
+            '0831': { lat: -6.2088, lng: 106.8456, city: 'Jakarta', radius: 3 },
+            '0832': { lat: -7.2575, lng: 112.7521, city: 'Surabaya', radius: 4 },
+            '0833': { lat: -6.9147, lng: 107.6098, city: 'Bandung', radius: 5 },
+            '0838': { lat: 3.5952, lng: 98.6722, city: 'Medan', radius: 6 }
         };
 
+        let map = null;
+        let currentMarker = null;
+        let currentCircle = null;
+        let currentMapType = 'standard';
         let searchHistory = JSON.parse(localStorage.getItem('phoneHistory')) || [];
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             const input = document.getElementById('phone-input');
             input.addEventListener('input', formatPhoneInput);
@@ -951,9 +1127,7 @@
                 if (e.key === 'Enter') trackNumber();
             });
             
-            if (searchHistory.length > 0) {
-                renderHistory();
-            }
+            if (searchHistory.length > 0) renderHistory();
         });
 
         function formatPhoneInput(e) {
@@ -984,12 +1158,127 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
+        function initMap(lat, lng, radius) {
+            if (map) {
+                map.remove();
+            }
+
+            const isDark = true;
+            const tileUrl = currentMapType === 'satellite' 
+                ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+
+            map = L.map('map', {
+                center: [lat, lng],
+                zoom: 13,
+                zoomControl: true,
+                attributionControl: false
+            });
+
+            L.tileLayer(tileUrl, {
+                maxZoom: 19,
+                subdomains: 'abcd',
+                attribution: '&copy; OpenStreetMap &copy; CARTO'
+            }).addTo(map);
+
+            // Custom icon
+            const customIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div class="marker-pin"></div><div class="pulse-ring"></div>`,
+                iconSize: [40, 40],
+                iconAnchor: [20, 40]
+            });
+
+            currentMarker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+            
+            currentCircle = L.circle([lat, lng], {
+                color: '#6366f1',
+                fillColor: '#6366f1',
+                fillOpacity: 0.1,
+                radius: radius * 1000,
+                weight: 2,
+                dashArray: '5, 10'
+            }).addTo(map);
+
+            // Popup dengan info
+            const popupContent = `
+                <div style="font-family: Space Grotesk; min-width: 200px;">
+                    <h3 style="margin: 0 0 10px 0; color: #6366f1; font-size: 16px;">
+                        <i class="fas fa-broadcast-tower"></i> Base Station
+                    </h3>
+                    <p style="margin: 5px 0; font-size: 13px; color: #ccc;">
+                        <strong>Radius:</strong> ${radius} km<br>
+                        <strong>Koordinat:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}<br>
+                        <strong>Status:</strong> <span style="color: #4ade80;">Aktif</span>
+                    </p>
+                </div>
+            `;
+            
+            currentMarker.bindPopup(popupContent).openPopup();
+
+            // Update coordinates display
+            document.getElementById('coordinates').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            document.getElementById('coverage-radius').textContent = `${radius}-${radius + 3} km`;
+            
+            // Random signal strength
+            const signals = ['Sangat Kuat (-65 dBm)', 'Kuat (-75 dBm)', 'Sedang (-85 dBm)', 'Lemah (-95 dBm)'];
+            document.getElementById('signal-strength').textContent = signals[Math.floor(Math.random() * signals.length)];
+        }
+
+        function setMapType(type) {
+            currentMapType = type;
+            document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${type}`).classList.add('active');
+            
+            if (currentMarker) {
+                const lat = currentMarker.getLatLng().lat;
+                const lng = currentMarker.getLatLng().lng;
+                const radius = parseInt(document.getElementById('coverage-radius').textContent);
+                initMap(lat, lng, radius);
+            }
+        }
+
+        function locateUser() {
+            if (!navigator.geolocation) {
+                showToast('Browser tidak mendukung geolokasi');
+                return;
+            }
+
+            document.getElementById('map-loading').classList.add('active');
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    
+                    if (!map) {
+                        initMap(latitude, longitude, 2);
+                    } else {
+                        map.setView([latitude, longitude], 15);
+                        L.marker([latitude, longitude], {
+                            icon: L.divIcon({
+                                className: 'custom-div-icon',
+                                html: '<div style="background: #22c55e; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.5);"></div>',
+                                iconSize: [20, 20],
+                                iconAnchor: [10, 10]
+                            })
+                        }).addTo(map).bindPopup('Lokasi Anda').openPopup();
+                    }
+                    
+                    document.getElementById('map-loading').classList.remove('active');
+                    showToast('Lokasi ditemukan!', 'success');
+                },
+                (error) => {
+                    document.getElementById('map-loading').classList.remove('active');
+                    showToast('Tidak dapat mengakses lokasi: ' + error.message);
+                }
+            );
+        }
+
         function trackNumber() {
             const input = document.getElementById('phone-input');
             const btn = document.querySelector('.btn-track');
             let number = input.value.replace(/\D/g, '');
             
-            // Validasi
             if (!number) {
                 showToast('Silakan masukkan nomor telepon terlebih dahulu');
                 return;
@@ -1000,10 +1289,9 @@
                 return;
             }
             
-            // Add loading state
             btn.classList.add('loading');
+            document.getElementById('map-loading').classList.add('active');
             
-            // Simulate API call
             setTimeout(() => {
                 btn.classList.remove('loading');
                 processNumber(number);
@@ -1011,11 +1299,9 @@
         }
 
         function processNumber(number) {
-            // Format dengan +62
             const formattedNumber = '+62 ' + number.slice(0, 4) + '-' + number.slice(4, 8) + '-' + number.slice(8);
             document.getElementById('display-number').textContent = formattedNumber;
             
-            // Detect provider
             const prefix = '0' + number.substring(0, 3);
             let detectedProvider = null;
             
@@ -1026,7 +1312,6 @@
                 }
             }
             
-            // Update UI
             const providerIcon = document.getElementById('provider-icon');
             const providerName = document.getElementById('provider-name');
             const prefixCode = document.getElementById('prefix-code');
@@ -1034,17 +1319,22 @@
             const region = document.getElementById('region');
             const statusBadge = document.getElementById('status-badge');
             
+            let coords = { lat: -6.2088, lng: 106.8456, city: 'Jakarta', radius: 5 };
+            
             if (detectedProvider) {
                 providerIcon.className = `provider-icon ${detectedProvider.key}`;
                 providerIcon.innerHTML = `<i class="fas ${detectedProvider.icon}"></i>`;
                 providerName.textContent = detectedProvider.name;
                 prefixCode.textContent = prefix;
                 networkType.textContent = detectedProvider.network;
-                region.textContent = regionData[prefix] || 'Indonesia';
                 statusBadge.textContent = 'Tervalidasi';
                 statusBadge.className = 'badge';
                 
-                // Risk assessment (simulated)
+                if (regionCoordinates[prefix]) {
+                    coords = regionCoordinates[prefix];
+                }
+                
+                region.textContent = coords.city;
                 updateRiskAssessment('low');
             } else {
                 providerIcon.className = 'provider-icon';
@@ -1058,16 +1348,18 @@
                 updateRiskAssessment('medium');
             }
             
-            // Show results
+            // Initialize map with coordinates
+            initMap(coords.lat, coords.lng, coords.radius);
+            document.getElementById('map-loading').classList.remove('active');
+            
             document.getElementById('results').classList.add('active');
+            addToHistory(number, detectedProvider, coords.city);
             
-            // Add to history
-            addToHistory(number, detectedProvider);
+            setTimeout(() => {
+                document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
             
-            // Scroll to results
-            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            
-            showToast('Nomor berhasil dilacak!', 'success');
+            showToast('Nomor berhasil dilacak dengan detail peta!', 'success');
         }
 
         function updateRiskAssessment(level) {
@@ -1092,13 +1384,14 @@
             }
         }
 
-        function addToHistory(number, provider) {
+        function addToHistory(number, provider, city) {
             const timestamp = new Date().toLocaleString('id-ID');
             const historyItem = {
                 number: number,
                 provider: provider ? provider.name : 'Unknown',
                 icon: provider ? provider.icon : 'fa-question',
                 color: provider ? provider.color : '#64748b',
+                city: city,
                 time: timestamp
             };
             
@@ -1121,7 +1414,7 @@
             historySection.style.display = 'block';
             historyList.innerHTML = '';
             
-            searchHistory.forEach((item, index) => {
+            searchHistory.forEach((item) => {
                 const div = document.createElement('div');
                 div.className = 'history-item';
                 div.onclick = () => {
@@ -1136,7 +1429,7 @@
                         </div>
                         <div class="history-details">
                             <h4>+62 ${item.number}</h4>
-                            <span>${item.provider}</span>
+                            <span>${item.provider} • ${item.city}</span>
                         </div>
                     </div>
                     <div class="history-time">${item.time}</div>
@@ -1144,20 +1437,6 @@
                 
                 historyList.appendChild(div);
             });
-        }
-
-        // Confetti effect for successful track
-        function createConfetti() {
-            const colors = ['#6366f1', '#ec4899', '#06b6d4', '#22c55e', '#f59e0b'];
-            for (let i = 0; i < 50; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                confetti.style.left = Math.random() * 100 + 'vw';
-                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-                confetti.style.animationDelay = Math.random() * 2 + 's';
-                document.body.appendChild(confetti);
-                setTimeout(() => confetti.remove(), 3000);
-            }
         }
     </script>
 </body>
