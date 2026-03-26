@@ -3,11 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pelacak Nomor Telepon Indonesia - Google Maps Edition</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <title>POS System - Aplikasi Kasir</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -19,662 +16,527 @@
             --primary: #6366f1;
             --primary-dark: #4f46e5;
             --secondary: #ec4899;
-            --accent: #06b6d4;
-            --dark: #0f172a;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #1e293b;
             --light: #f8fafc;
-            --glass: rgba(255, 255, 255, 0.1);
-            --map-dark: #1e293b;
-            --google-blue: #4285F4;
-            --google-red: #EA4335;
-            --google-yellow: #FBBC05;
-            --google-green: #34A853;
+            --gray: #64748b;
+            --border: #e2e8f0;
         }
 
         body {
-            font-family: 'Space Grotesk', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            color: var(--light);
-            overflow-x: hidden;
-        }
-
-        .bg-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
-
-        .bg-animation .circle {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.4;
-            animation: float 20s infinite ease-in-out;
-        }
-
-        .circle:nth-child(1) {
-            width: 400px;
-            height: 400px;
-            background: var(--primary);
-            top: -100px;
-            left: -100px;
-        }
-
-        .circle:nth-child(2) {
-            width: 300px;
-            height: 300px;
-            background: var(--secondary);
-            top: 50%;
-            right: -50px;
-            animation-delay: 5s;
-        }
-
-        .circle:nth-child(3) {
-            width: 250px;
-            height: 250px;
-            background: var(--accent);
-            bottom: -50px;
-            left: 30%;
-            animation-delay: 10s;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(30px, -30px) scale(1.1); }
-            66% { transform: translate(-20px, 20px) scale(0.9); }
+            color: var(--dark);
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 40px 20px;
-            position: relative;
-            z-index: 1;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            min-height: 100vh;
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 50px;
-            animation: fadeInDown 1s ease-out;
+        /* Header */
+        .header {
+            grid-column: 1 / -1;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideDown 0.5s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .logo {
-            display: inline-flex;
+            display: flex;
             align-items: center;
             gap: 15px;
-            margin-bottom: 20px;
         }
 
         .logo-icon {
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 20px;
+            border-radius: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        .datetime {
+            text-align: right;
+        }
+
+        .datetime .time {
             font-size: 28px;
-            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        h1 {
-            font-size: 2.5rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #fff, #a5b4fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
+            color: var(--dark);
         }
 
-        .subtitle {
-            color: #94a3b8;
-            font-size: 1.1rem;
-            max-width: 600px;
-            margin: 0 auto;
-            line-height: 1.6;
+        .datetime .date {
+            font-size: 14px;
+            color: var(--gray);
         }
 
-        .search-section {
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 30px;
-            padding: 40px;
-            margin-bottom: 30px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            animation: fadeInUp 1s ease-out 0.3s both;
-        }
-
-        .input-group {
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: 500;
-            color: #e2e8f0;
-            font-size: 0.95rem;
-        }
-
-        .input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .country-code {
-            position: absolute;
-            left: 20px;
-            font-weight: 600;
-            color: var(--accent);
-            font-size: 1.1rem;
-            z-index: 2;
-        }
-
-        input[type="tel"] {
-            width: 100%;
-            padding: 20px 20px 20px 60px;
-            font-size: 1.3rem;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            background: rgba(15, 23, 42, 0.6);
-            color: #fff;
-            font-family: 'Space Grotesk', sans-serif;
-            transition: all 0.3s ease;
-            outline: none;
-        }
-
-        input[type="tel"]:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
-        }
-
-        .btn-track {
-            width: 100%;
-            padding: 18px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #fff;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border: none;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Space Grotesk', sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-track:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
-        }
-
-        .btn-track.loading {
-            pointer-events: none;
-        }
-
-        .btn-track .spinner {
-            display: none;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        .btn-track.loading .spinner {
-            display: block;
-        }
-
-        .btn-track.loading .text {
-            opacity: 0.7;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .results-section {
-            display: none;
-            animation: fadeInUp 0.6s ease-out;
-        }
-
-        .results-section.active {
-            display: block;
-        }
-
-        .result-card {
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .result-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
-        }
-
-        .result-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            flex-wrap: wrap;
-        }
-
-        .provider-icon {
-            width: 70px;
-            height: 70px;
+        /* Main Content */
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .provider-icon.telkomsel { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .provider-icon.indosat { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
-        .provider-icon.xl { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-        .provider-icon.tri { background: linear-gradient(135deg, #a855f7, #7c3aed); }
-        .provider-icon.smartfren { background: linear-gradient(135deg, #ec4899, #db2777); }
-        .provider-icon.axis { background: linear-gradient(135deg, #84cc16, #65a30d); }
-
-        .result-title {
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .result-title h2 {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-            color: #fff;
-        }
-
-        .number-display {
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--accent), var(--primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 1px;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 6px 12px;
-            background: rgba(34, 197, 94, 0.2);
-            color: #4ade80;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-
-        .badge.warning {
-            background: rgba(234, 179, 8, 0.2);
-            color: #facc15;
-            border-color: rgba(234, 179, 8, 0.3);
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 25px;
-        }
-
-        .info-item {
-            background: rgba(15, 23, 42, 0.4);
-            padding: 20px;
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.3s ease;
-        }
-
-        .info-item:hover {
-            transform: translateY(-3px);
-            border-color: rgba(99, 102, 241, 0.3);
-            background: rgba(15, 23, 42, 0.6);
-        }
-
-        .info-item .label {
-            font-size: 0.85rem;
-            color: #94a3b8;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .info-item .value {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* Google Maps Integration Styles */
-        .maps-container {
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 20px;
-            margin-bottom: 25px;
-        }
-
-        @media (max-width: 968px) {
-            .maps-container {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .map-wrapper {
-            background: rgba(15, 23, 42, 0.4);
-            border-radius: 20px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-        }
-
-        .map-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .map-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--accent);
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .map-controls {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .map-btn {
-            padding: 8px 16px;
-            background: rgba(99, 102, 241, 0.2);
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            color: #fff;
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.85rem;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .map-btn:hover {
-            background: rgba(99, 102, 241, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .map-btn.active {
-            background: var(--primary);
-            border-color: var(--primary);
-        }
-
-        #map {
-            height: 450px;
-            border-radius: 12px;
-            z-index: 1;
-            background: var(--map-dark);
-        }
-
-        /* Google Maps Sidebar */
-        .google-maps-sidebar {
-            background: rgba(15, 23, 42, 0.6);
-            border-radius: 20px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
+            gap: 20px;
+            animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Search Bar */
+        .search-container {
+            position: relative;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 15px 20px 15px 50px;
+            border: 2px solid var(--border);
+            border-radius: 15px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+            font-size: 20px;
+        }
+
+        /* Category Filter */
+        .category-filter {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .category-btn {
+            padding: 10px 20px;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+
+        .category-btn:hover, .category-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Products Grid */
+        .products-section {
+            flex: 1;
+            overflow-y: auto;
+            max-height: calc(100vh - 350px);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 15px;
         }
 
-        .gmaps-header {
+        .product-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 15px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: var(--primary);
+        }
+
+        .product-card::before {
+            content: '+';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background: var(--success);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .product-card:hover::before {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .product-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: var(--dark);
+        }
+
+        .product-price {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--primary);
+        }
+
+        .product-stock {
+            font-size: 12px;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+
+        /* Cart Section */
+        .cart-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            height: fit-content;
+            animation: slideIn 0.6s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .cart-title {
+            font-size: 20px;
+            font-weight: 700;
             display: flex;
             align-items: center;
             gap: 10px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .gmaps-logo {
-            width: 40px;
-            height: 40px;
-            background: white;
+        .cart-count {
+            background: var(--primary);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .clear-cart {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 15px;
             border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .clear-cart:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+        }
+
+        /* Cart Items */
+        .cart-items {
+            flex: 1;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+            animation: itemAdd 0.3s ease;
+        }
+
+        @keyframes itemAdd {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .cart-item-image {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 24px;
+            flex-shrink: 0;
         }
 
-        .gmaps-title {
+        .cart-item-details {
             flex: 1;
         }
 
-        .gmaps-title h3 {
-            font-size: 1rem;
-            margin: 0;
-            color: #fff;
+        .cart-item-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 3px;
         }
 
-        .gmaps-title span {
-            font-size: 0.8rem;
-            color: #94a3b8;
+        .cart-item-price {
+            font-size: 13px;
+            color: var(--gray);
         }
 
-        .gmaps-actions {
+        .quantity-control {
             display: flex;
-            flex-direction: column;
+            align-items: center;
             gap: 10px;
         }
 
-        .gmaps-btn {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            color: #fff;
-            text-decoration: none;
-            transition: all 0.3s ease;
+        .qty-btn {
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 8px;
             cursor: pointer;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.95rem;
-        }
-
-        .gmaps-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateX(5px);
-            border-color: var(--google-blue);
-        }
-
-        .gmaps-btn i {
-            width: 24px;
-            height: 24px;
+            font-weight: bold;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 6px;
+        }
+
+        .qty-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .qty-value {
+            font-weight: 700;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .remove-item {
+            color: var(--danger);
+            cursor: pointer;
+            padding: 5px;
+            transition: all 0.2s;
+        }
+
+        .remove-item:hover {
+            transform: scale(1.2);
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray);
+        }
+
+        .empty-cart-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* Cart Summary */
+        .cart-summary {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
             font-size: 14px;
         }
 
-        .gmaps-btn.view i { background: var(--google-blue); }
-        .gmaps-btn.directions i { background: var(--google-green); }
-        .gmaps-btn.street i { background: var(--google-yellow); color: #000; }
-        .gmaps-btn.share i { background: var(--google-red); }
-        .gmaps-btn.embed i { background: var(--primary); }
-
-        .gmaps-preview {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            overflow: hidden;
-            position: relative;
-            height: 200px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .summary-row.discount {
+            color: var(--success);
         }
 
-        .gmaps-preview iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            filter: grayscale(20%) contrast(1.1);
-        }
-
-        .gmaps-preview-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(15, 23, 42, 0.7);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .gmaps-preview:hover .gmaps-preview-overlay {
-            opacity: 1;
-        }
-
-        .gmaps-preview-overlay i {
-            font-size: 32px;
-            color: var(--google-red);
-        }
-
-        .gmaps-preview-overlay span {
-            font-size: 0.9rem;
-            color: #fff;
-        }
-
-        .location-details {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: 10px;
-        }
-
-        .location-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            margin-bottom: 12px;
-            font-size: 0.9rem;
-        }
-
-        .location-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .location-item i {
-            color: var(--accent);
-            margin-top: 3px;
-            width: 16px;
-        }
-
-        .location-item div {
-            flex: 1;
-        }
-
-        .location-item strong {
-            display: block;
-            color: #fff;
-            margin-bottom: 2px;
-        }
-
-        .location-item span {
-            color: #94a3b8;
-            font-size: 0.85rem;
-        }
-
-        .map-info-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .map-stat-card {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .map-stat-card i {
+        .summary-row.total {
             font-size: 20px;
-            color: var(--accent);
-            margin-bottom: 5px;
-            display: block;
+            font-weight: 700;
+            color: var(--dark);
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid var(--border);
         }
 
-        .map-stat-card .stat-value {
-            font-size: 0.9rem;
+        /* Payment Section */
+        .payment-section {
+            margin-bottom: 15px;
+        }
+
+        .payment-label {
+            font-size: 14px;
             font-weight: 600;
-            color: #fff;
+            margin-bottom: 8px;
+            color: var(--gray);
+        }
+
+        .payment-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            text-align: right;
+            transition: all 0.3s;
+        }
+
+        .payment-input:focus {
+            outline: none;
+            border-color: var(--success);
+        }
+
+        .change-display {
+            background: var(--success);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: 700;
+            display: none;
+        }
+
+        .change-display.show {
             display: block;
+            animation: pulse 0.5s ease;
         }
 
-        .map-stat-card .stat-label {
-            font-size: 0.75rem;
-            color: #64748b;
-            margin-top: 2px;
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
         }
 
-        /* Modal for Embed Map */
+        /* Checkout Button */
+        .checkout-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .checkout-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.5);
+        }
+
+        .checkout-btn:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -682,1053 +544,701 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 2000;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
             align-items: center;
             justify-content: center;
             backdrop-filter: blur(5px);
         }
 
-        .modal.active {
+        .modal.show {
             display: flex;
+            animation: fadeIn 0.3s ease;
         }
 
         .modal-content {
-            background: var(--dark);
+            background: white;
             border-radius: 20px;
             padding: 30px;
-            max-width: 800px;
+            max-width: 400px;
             width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
+            text-align: center;
+            animation: scaleIn 0.3s ease;
         }
 
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        @keyframes scaleIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
 
-        .modal-header h3 {
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 5px;
-            transition: color 0.3s ease;
-        }
-
-        .modal-close:hover {
-            color: #fff;
-        }
-
-        .embed-container {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: 15px;
-        }
-
-        .embed-container iframe {
-            width: 100%;
-            height: 400px;
-            border: none;
-            border-radius: 8px;
-        }
-
-        .embed-code {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85rem;
-            color: #94a3b8;
-            overflow-x: auto;
-            position: relative;
-        }
-
-        .copy-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 6px 12px;
-            background: var(--primary);
-            border: none;
-            border-radius: 6px;
-            color: #fff;
-            cursor: pointer;
-            font-size: 0.8rem;
-            transition: all 0.3s ease;
-        }
-
-        .copy-btn:hover {
-            background: var(--primary-dark);
-        }
-
-        /* Custom Leaflet Styles */
-        .leaflet-container {
-            background: var(--map-dark);
-            font-family: 'Space Grotesk', sans-serif;
-        }
-
-        .leaflet-popup-content-wrapper {
-            background: rgba(15, 23, 42, 0.95);
-            color: #fff;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-        }
-
-        .leaflet-popup-tip {
-            background: rgba(15, 23, 42, 0.95);
-        }
-
-        .custom-div-icon {
-            background: none;
-            border: none;
-        }
-
-        .marker-pin {
-            width: 40px;
-            height: 40px;
-            border-radius: 50% 50% 50% 0;
-            background: linear-gradient(135deg, var(--google-red), var(--google-yellow));
-            position: absolute;
-            transform: rotate(-45deg);
-            left: 50%;
-            top: 50%;
-            margin: -20px 0 0 -20px;
-            animation: bounce 1s ease-in-out infinite;
-            box-shadow: 0 4px 12px rgba(234, 67, 53, 0.5);
-        }
-
-        .marker-pin::after {
-            content: '';
-            width: 20px;
-            height: 20px;
-            margin: 10px 0 0 10px;
-            background: #fff;
-            position: absolute;
+        .modal-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--success), #059669);
             border-radius: 50%;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: rotate(-45deg) translateY(0); }
-            50% { transform: rotate(-45deg) translateY(-10px); }
-        }
-
-        .pulse-ring {
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            border: 3px solid var(--google-red);
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            animation: pulse-ring 2s ease-out infinite;
-            opacity: 0;
-        }
-
-        @keyframes pulse-ring {
-            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
-        }
-
-        .risk-section {
-            background: rgba(15, 23, 42, 0.4);
-            border-radius: 16px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .risk-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
-        }
-
-        .risk-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 600;
-        }
-
-        .risk-meter {
-            height: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .risk-fill {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 1s ease-out;
-        }
-
-        .risk-fill.low { width: 20%; background: linear-gradient(90deg, #22c55e, #4ade80); }
-        .risk-fill.medium { width: 50%; background: linear-gradient(90deg, #eab308, #facc15); }
-        .risk-fill.high { width: 85%; background: linear-gradient(90deg, #ef4444, #f87171); }
-
-        .risk-labels {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 8px;
-            font-size: 0.8rem;
-            color: #64748b;
-        }
-
-        .history-section {
-            margin-top: 30px;
-        }
-
-        .section-title {
-            font-size: 1.3rem;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .history-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .history-item {
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .history-item:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateX(5px);
-        }
-
-        .history-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .history-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            margin: 0 auto 20px;
+            font-size: 40px;
+            color: white;
         }
 
-        .history-details h4 {
-            font-size: 1rem;
-            margin-bottom: 3px;
+        .modal h2 {
+            margin-bottom: 10px;
+            color: var(--dark);
         }
 
-        .history-details span {
-            font-size: 0.85rem;
-            color: #94a3b8;
+        .modal p {
+            color: var(--gray);
+            margin-bottom: 25px;
         }
 
-        .history-time {
-            font-size: 0.8rem;
-            color: #64748b;
+        .modal-btn {
+            padding: 12px 30px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
         }
 
-        footer {
-            text-align: center;
-            margin-top: 50px;
-            padding: 30px;
-            color: #64748b;
-            font-size: 0.9rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        .modal-btn:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
         }
 
-        .toast {
+        /* Receipt */
+        .receipt {
+            display: none;
             position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: rgba(15, 23, 42, 0.95);
-            color: #fff;
-            padding: 16px 24px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            z-index: 3000;
-            opacity: 0;
-            transition: all 0.4s ease;
-        }
-
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-
-        .toast.success { border-color: rgba(34, 197, 94, 0.3); }
-        .toast.error { border-color: rgba(239, 68, 68, 0.3); }
-
-        .loading-overlay {
-            position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(15, 23, 42, 0.9);
-            display: flex;
-            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
-            border-radius: 12px;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
         }
 
-        .loading-overlay.active {
-            opacity: 1;
-            pointer-events: all;
+        .receipt.show {
+            display: flex;
         }
 
-        .loading-overlay i {
-            font-size: 48px;
-            color: var(--primary);
-            animation: spin 1s linear infinite;
-            margin-bottom: 15px;
+        .receipt-paper {
+            background: white;
+            width: 320px;
+            padding: 30px;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
         }
 
-        @media (max-width: 768px) {
-            h1 { font-size: 1.8rem; }
-            .search-section { padding: 25px; }
-            .result-header { flex-direction: column; text-align: center; }
-            .info-grid { grid-template-columns: 1fr; }
-            .number-display { font-size: 1.4rem !important; }
-            #map { height: 300px; }
+        .receipt-paper::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background: radial-gradient(circle, transparent 6px, white 6px);
+            background-size: 20px 20px;
+            background-position: -10px -10px;
+        }
+
+        .receipt-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px dashed #ccc;
+        }
+
+        .receipt-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .receipt-info {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .receipt-items {
+            margin: 20px 0;
+        }
+
+        .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .receipt-item-name {
+            flex: 1;
+        }
+
+        .receipt-item-qty {
+            width: 30px;
+            text-align: center;
+        }
+
+        .receipt-item-price {
+            width: 80px;
+            text-align: right;
+        }
+
+        .receipt-total {
+            border-top: 2px dashed #ccc;
+            margin-top: 15px;
+            padding-top: 15px;
+        }
+
+        .receipt-total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .receipt-total-row.grand {
+            font-weight: bold;
+            font-size: 16px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #ccc;
+        }
+
+        .receipt-footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px dashed #ccc;
+            font-size: 12px;
+        }
+
+        .receipt-barcode {
+            margin-top: 15px;
+            height: 50px;
+            background: repeating-linear-gradient(
+                90deg,
+                #000 0px,
+                #000 2px,
+                transparent 2px,
+                transparent 4px
+            );
+            opacity: 0.5;
+        }
+
+        .receipt-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .receipt-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .print-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .close-btn {
+            background: var(--border);
+            color: var(--dark);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .cart-section {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                max-height: 50vh;
+                border-radius: 20px 20px 0 0;
+                z-index: 100;
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
         }
     </style>
 </head>
 <body>
-    <div class="bg-animation">
-        <div class="circle"></div>
-        <div class="circle"></div>
-        <div class="circle"></div>
-    </div>
-
     <div class="container">
-        <header>
+        <!-- Header -->
+        <div class="header">
             <div class="logo">
-                <div class="logo-icon">
-                    <i class="fas fa-satellite-dish"></i>
+                <div class="logo-icon">POS</div>
+                <div>
+                    <h1>Quick<span>Sale</span></h1>
+                    <small>Sistem Point of Sale</small>
                 </div>
             </div>
-            <h1>Pelacak Nomor Telepon Pro</h1>
-            <p class="subtitle">Integrasi peta lengkap dengan Google Maps, Street View, dan navigasi real-time</p>
-        </header>
+            <div class="datetime">
+                <div class="time" id="clock">00:00</div>
+                <div class="date" id="date">Loading...</div>
+            </div>
+        </div>
 
-        <section class="search-section">
-            <div class="input-group">
-                <label for="phone-input">Masukkan Nomor Telepon</label>
-                <div class="input-wrapper">
-                    <span class="country-code">+62</span>
-                    <input type="tel" id="phone-input" placeholder="812-3456-7890" maxlength="15" autocomplete="off">
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Search -->
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-bar" id="searchInput" placeholder="Cari produk...">
+            </div>
+
+            <!-- Categories -->
+            <div class="category-filter" id="categoryFilter">
+                <button class="category-btn active" data-category="all">Semua</button>
+                <button class="category-btn" data-category="makanan">Makanan</button>
+                <button class="category-btn" data-category="minuman">Minuman</button>
+                <button class="category-btn" data-category="snack">Snack</button>
+                <button class="category-btn" data-category="kebutuhan">Kebutuhan</button>
+            </div>
+
+            <!-- Products -->
+            <div class="products-section">
+                <div class="products-grid" id="productsGrid">
+                    <!-- Products will be inserted here -->
                 </div>
             </div>
-            <button class="btn-track" onclick="trackNumber()">
-                <span class="spinner"></span>
-                <span class="text">
-                    <i class="fas fa-search-location"></i>
-                    Lacak & Tampilkan di Peta
-                </span>
+        </div>
+
+        <!-- Cart Section -->
+        <div class="cart-section">
+            <div class="cart-header">
+                <div class="cart-title">
+                    🛒 Keranjang
+                    <span class="cart-count" id="cartCount">0</span>
+                </div>
+                <button class="clear-cart" onclick="clearCart()">Kosongkan</button>
+            </div>
+
+            <div class="cart-items" id="cartItems">
+                <div class="empty-cart">
+                    <div class="empty-cart-icon">🛒</div>
+                    <p>Keranjang masih kosong</p>
+                    <small>Tap produk untuk menambahkan</small>
+                </div>
+            </div>
+
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span id="subtotal">Rp 0</span>
+                </div>
+                <div class="summary-row">
+                    <span>PPN (10%)</span>
+                    <span id="tax">Rp 0</span>
+                </div>
+                <div class="summary-row discount" id="discountRow" style="display: none;">
+                    <span>Diskon</span>
+                    <span id="discount">-Rp 0</span>
+                </div>
+                <div class="summary-row total">
+                    <span>TOTAL</span>
+                    <span id="total">Rp 0</span>
+                </div>
+            </div>
+
+            <div class="payment-section">
+                <div class="payment-label">Bayar (Rp)</div>
+                <input type="number" class="payment-input" id="paymentInput" placeholder="0" oninput="calculateChange()">
+                <div class="change-display" id="changeDisplay">
+                    Kembalian: <span id="changeAmount">Rp 0</span>
+                </div>
+            </div>
+
+            <button class="checkout-btn" id="checkoutBtn" onclick="processCheckout()" disabled>
+                BAYAR SEKARANG
             </button>
-        </section>
-
-        <section class="results-section" id="results">
-            <div class="result-card">
-                <div class="result-header">
-                    <div class="provider-icon" id="provider-icon">
-                        <i class="fas fa-signal"></i>
-                    </div>
-                    <div class="result-title">
-                        <h2 id="provider-name">Provider</h2>
-                        <div class="number-display" id="display-number">+62 xxx-xxxx-xxxx</div>
-                    </div>
-                    <span class="badge" id="status-badge">Aktif</span>
-                </div>
-
-                <div class="info-grid">
-                    <div class="info-item">
-                        <div class="label">Prefix/Kode Area</div>
-                        <div class="value">
-                            <i class="fas fa-hashtag"></i>
-                            <span id="prefix-code">-</span>
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <div class="label">Jaringan</div>
-                        <div class="value">
-                            <i class="fas fa-network-wired"></i>
-                            <span id="network-type">-</span>
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <div class="label">Wilayah</div>
-                        <div class="value">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span id="region">-</span>
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <div class="label">Timezone</div>
-                        <div class="value">
-                            <i class="fas fa-clock"></i>
-                            <span id="timezone">WIB (UTC+7)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Dual Maps Container -->
-                <div class="maps-container">
-                    <!-- Main Leaflet Map -->
-                    <div class="map-wrapper">
-                        <div class="map-header">
-                            <div class="map-title">
-                                <i class="fas fa-map"></i>
-                                <span>Peta Interaktif Base Station</span>
-                            </div>
-                            <div class="map-controls">
-                                <button class="map-btn active" onclick="setMapType('standard')" id="btn-standard">
-                                    <i class="fas fa-map"></i> Standard
-                                </button>
-                                <button class="map-btn" onclick="setMapType('satellite')" id="btn-satellite">
-                                    <i class="fas fa-satellite"></i> Satellite
-                                </button>
-                            </div>
-                        </div>
-                        <div style="position: relative;">
-                            <div id="map"></div>
-                            <div class="loading-overlay" id="map-loading">
-                                <i class="fas fa-circle-notch"></i>
-                                <span>Memuat peta...</span>
-                            </div>
-                        </div>
-                        <div class="map-info-grid">
-                            <div class="map-stat-card">
-                                <i class="fas fa-broadcast-tower"></i>
-                                <span class="stat-value" id="coverage-stat">5 km</span>
-                                <span class="stat-label">Radius</span>
-                            </div>
-                            <div class="map-stat-card">
-                                <i class="fas fa-map-pin"></i>
-                                <span class="stat-value" id="coord-stat">-6.2088</span>
-                                <span class="stat-label">Latitude</span>
-                            </div>
-                            <div class="map-stat-card">
-                                <i class="fas fa-compass"></i>
-                                <span class="stat-value" id="lng-stat">106.8456</span>
-                                <span class="stat-label">Longitude</span>
-                            </div>
-                            <div class="map-stat-card">
-                                <i class="fas fa-signal"></i>
-                                <span class="stat-value" id="signal-stat">-75 dBm</span>
-                                <span class="stat-label">Sinyal</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Google Maps Sidebar -->
-                    <div class="google-maps-sidebar">
-                        <div class="gmaps-header">
-                            <div class="gmaps-logo">
-                                <i class="fab fa-google" style="background: linear-gradient(45deg, #EA4335, #FBBC05, #34A853, #4285F4); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
-                            </div>
-                            <div class="gmaps-title">
-                                <h3>Google Maps</h3>
-                                <span>Integrasi Lengkap</span>
-                            </div>
-                        </div>
-
-                        <div class="gmaps-preview" id="gmaps-preview">
-                            <iframe id="gmaps-frame" src="" allowfullscreen="" loading="lazy"></iframe>
-                            <div class="gmaps-preview-overlay">
-                                <i class="fas fa-external-link-alt"></i>
-                                <span>Klik untuk buka di Google Maps</span>
-                            </div>
-                        </div>
-
-                        <div class="gmaps-actions">
-                            <a href="#" class="gmaps-btn view" id="gmaps-view" target="_blank">
-                                <i class="fas fa-eye"></i>
-                                <span>Lihat di Google Maps</span>
-                            </a>
-                            <a href="#" class="gmaps-btn directions" id="gmaps-directions" target="_blank">
-                                <i class="fas fa-directions"></i>
-                                <span>Petunjuk Arah (Rute)</span>
-                            </a>
-                            <a href="#" class="gmaps-btn street" id="gmaps-street" target="_blank">
-                                <i class="fas fa-street-view"></i>
-                                <span>Street View</span>
-                            </a>
-                            <button class="gmaps-btn share" onclick="shareLocation()">
-                                <i class="fas fa-share-alt"></i>
-                                <span>Bagikan Lokasi</span>
-                            </button>
-                            <button class="gmaps-btn embed" onclick="openEmbedModal()">
-                                <i class="fas fa-code"></i>
-                                <span>Embed Peta</span>
-                            </button>
-                        </div>
-
-                        <div class="location-details">
-                            <div class="location-item">
-                                <i class="fas fa-map-marker-alt"></i>
-                                <div>
-                                    <strong>Alamat Estimasi</strong>
-                                    <span id="location-address">Menunggu data...</span>
-                                </div>
-                            </div>
-                            <div class="location-item">
-                                <i class="fas fa-info-circle"></i>
-                                <div>
-                                    <strong>Catatan</strong>
-                                    <span>Lokasi merupakan estimasi base station terdekat, bukan lokasi eksak perangkat.</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="risk-section">
-                    <div class="risk-header">
-                        <div class="risk-title">
-                            <i class="fas fa-shield-alt" id="risk-icon"></i>
-                            <span>Tingkat Risiko & Keamanan</span>
-                        </div>
-                        <span id="risk-text">Rendah</span>
-                    </div>
-                    <div class="risk-meter">
-                        <div class="risk-fill" id="risk-fill"></div>
-                    </div>
-                    <div class="risk-labels">
-                        <span>Aman</span>
-                        <span>Netral</span>
-                        <span>Berisiko</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="history-section" id="history-section" style="display: none;">
-            <h3 class="section-title">
-                <i class="fas fa-history"></i>
-                Riwayat Pencarian
-            </h3>
-            <div class="history-list" id="history-list"></div>
-        </section>
-
-        <footer>
-            <p class="disclaimer">
-                <i class="fas fa-info-circle"></i>
-                Data lokasi bersifat estimasi berdasarkan kode area dan registrasi provider. 
-                Google Maps integration untuk preview dan navigasi. Tidak menyimpan data pribadi.
-            </p>
-            <p>&copy; 2024 PhoneTracker ID Pro dengan Google Maps Integration</p>
-        </footer>
+        </div>
     </div>
 
-    <!-- Embed Modal -->
-    <div class="modal" id="embed-modal">
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-code"></i> Embed Google Maps</h3>
-                <button class="modal-close" onclick="closeEmbedModal()">
-                    <i class="fas fa-times"></i>
-                </button>
+            <div class="modal-icon">✓</div>
+            <h2>Pembayaran Berhasil!</h2>
+            <p>Transaksi telah tercatat dalam sistem</p>
+            <button class="modal-btn" onclick="closeModal()">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Receipt -->
+    <div class="receipt" id="receipt">
+        <div class="receipt-paper">
+            <div class="receipt-header">
+                <div class="receipt-title">QUICK SALE</div>
+                <div class="receipt-info">
+                    Jl. Sudirman No. 123<br>
+                    Telp: 0812-3456-7890
+                </div>
+                <div class="receipt-info" style="margin-top: 10px;">
+                    <span id="receiptDate"></span><br>
+                    No: <span id="receiptNumber">TRX-001</span>
+                </div>
             </div>
-            <p style="color: #94a3b8; margin-bottom: 15px;">
-                Salin kode berikut untuk menampilkan peta ini di website Anda:
-            </p>
-            <div class="embed-container">
-                <iframe id="embed-preview" src="" allowfullscreen></iframe>
+
+            <div class="receipt-items" id="receiptItems">
+                <!-- Items will be inserted here -->
             </div>
-            <div class="embed-code">
-                <button class="copy-btn" onclick="copyEmbedCode()">
-                    <i class="fas fa-copy"></i> Copy
-                </button>
-                <code id="embed-code-text"></code>
+
+            <div class="receipt-total">
+                <div class="receipt-total-row">
+                    <span>Subtotal</span>
+                    <span id="receiptSubtotal">Rp 0</span>
+                </div>
+                <div class="receipt-total-row">
+                    <span>PPN (10%)</span>
+                    <span id="receiptTax">Rp 0</span>
+                </div>
+                <div class="receipt-total-row grand">
+                    <span>TOTAL</span>
+                    <span id="receiptTotal">Rp 0</span>
+                </div>
+                <div class="receipt-total-row" style="margin-top: 10px;">
+                    <span>Bayar</span>
+                    <span id="receiptPayment">Rp 0</span>
+                </div>
+                <div class="receipt-total-row">
+                    <span>Kembali</span>
+                    <span id="receiptChange">Rp 0</span>
+                </div>
+            </div>
+
+            <div class="receipt-footer">
+                <div class="receipt-barcode"></div>
+                <p style="margin-top: 10px;">Terima Kasih</p>
+                <p>Atas Kunjungan Anda</p>
+            </div>
+
+            <div class="receipt-actions">
+                <button class="receipt-btn print-btn" onclick="printReceipt()">🖨️ Print</button>
+                <button class="receipt-btn close-btn" onclick="closeReceipt()">Tutup</button>
             </div>
         </div>
     </div>
 
-    <div class="toast" id="toast">
-        <i class="fas fa-exclamation-circle"></i>
-        <span id="toast-message">Message</span>
-    </div>
-
     <script>
-        // Data Provider
-        const providerData = {
-            'telkomsel': {
-                name: 'Telkomsel',
-                prefixes: ['0811', '0812', '0813', '0821', '0822', '0823', '0852', '0853', '0851'],
-                icon: 'fa-signal',
-                color: '#ef4444',
-                network: 'GSM/LTE/5G'
-            },
-            'indosat': {
-                name: 'Indosat Ooredoo',
-                prefixes: ['0814', '0815', '0816', '0855', '0856', '0857', '0858'],
-                icon: 'fa-broadcast-tower',
-                color: '#fbbf24',
-                network: 'GSM/LTE/5G'
-            },
-            'xl': {
-                name: 'XL Axiata',
-                prefixes: ['0817', '0818', '0819', '0859', '0877', '0878', '0879'],
-                icon: 'fa-tower-cell',
-                color: '#3b82f6',
-                network: 'GSM/LTE/5G'
-            },
-            'tri': {
-                name: '3 (Tri)',
-                prefixes: ['0895', '0896', '0897', '0898', '0899'],
-                icon: 'fa-mobile-alt',
-                color: '#a855f7',
-                network: 'GSM/LTE'
-            },
-            'smartfren': {
-                name: 'Smartfren',
-                prefixes: ['0881', '0882', '0883', '0884', '0885', '0886', '0887', '0888', '0889'],
-                icon: 'fa-wifi',
-                color: '#ec4899',
-                network: 'CDMA/LTE'
-            },
-            'axis': {
-                name: 'Axis',
-                prefixes: ['0831', '0832', '0833', '0838'],
-                icon: 'fa-globe',
-                color: '#84cc16',
-                network: 'GSM/LTE'
-            }
-        };
+        // Data Produk
+        const products = [
+            { id: 1, name: "Nasi Goreng", price: 25000, category: "makanan", stock: 20, emoji: "🍛" },
+            { id: 2, name: "Mie Ayam", price: 20000, category: "makanan", stock: 15, emoji: "🍜" },
+            { id: 3, name: "Ayam Goreng", price: 30000, category: "makanan", stock: 10, emoji: "🍗" },
+            { id: 4, name: "Bakso", price: 18000, category: "makanan", stock: 25, emoji: "🍲" },
+            { id: 5, name: "Sate Ayam", price: 35000, category: "makanan", stock: 12, emoji: "🍢" },
+            { id: 6, name: "Kopi Hitam", price: 15000, category: "minuman", stock: 30, emoji: "☕" },
+            { id: 7, name: "Teh Manis", price: 8000, category: "minuman", stock: 40, emoji: "🍵" },
+            { id: 8, name: "Jus Jeruk", price: 18000, category: "minuman", stock: 20, emoji: "🧃" },
+            { id: 9, name: "Air Mineral", price: 5000, category: "minuman", stock: 50, emoji: "💧" },
+            { id: 10, name: "Soda", price: 12000, category: "minuman", stock: 35, emoji: "🥤" },
+            { id: 11, name: "Keripik Kentang", price: 10000, category: "snack", stock: 30, emoji: "🥔" },
+            { id: 12, name: "Coklat Bar", price: 15000, category: "snack", stock: 25, emoji: "🍫" },
+            { id: 13, name: "Biskuit", price: 8000, category: "snack", stock: 40, emoji: "🍪" },
+            { id: 14, name: "Permen", price: 5000, category: "snack", stock: 60, emoji: "🍬" },
+            { id: 15, name: "Sabun Mandi", price: 12000, category: "kebutuhan", stock: 20, emoji: "🧼" },
+            { id: 16, name: "Pasta Gigi", price: 15000, category: "kebutuhan", stock: 18, emoji: "🦷" },
+            { id: 17, name: "Shampoo", price: 25000, category: "kebutuhan", stock: 15, emoji: "🧴" },
+            { id: 18, name: "Tissue", price: 10000, category: "kebutuhan", stock: 30, emoji: "🧻" },
+            { id: 19, name: "Deterjen", price: 20000, category: "kebutuhan", stock: 12, emoji: "🧺" },
+            { id: 20, name: "Minyak Goreng", price: 35000, category: "kebutuhan", stock: 10, emoji: "🛢️" }
+        ];
 
-        // Data koordinat detail
-        const regionCoordinates = {
-            '0811': { lat: -6.2088, lng: 106.8456, city: 'Jakarta Pusat', radius: 3, address: 'Gambir, Jakarta Pusat' },
-            '0812': { lat: -6.2297, lng: 106.6894, city: 'Jakarta Barat', radius: 4, address: 'Kebon Jeruk, Jakarta Barat' },
-            '0813': { lat: -6.2673, lng: 106.8136, city: 'Jakarta Selatan', radius: 3, address: 'Kebayoran Baru, Jakarta Selatan' },
-            '0821': { lat: -6.9175, lng: 107.6191, city: 'Bandung', radius: 5, address: 'Cihampelas, Bandung' },
-            '0822': { lat: -6.9147, lng: 107.6098, city: 'Bandung', radius: 5, address: 'Dago, Bandung' },
-            '0823': { lat: -7.2575, lng: 112.7521, city: 'Surabaya', radius: 4, address: 'Tunjungan, Surabaya' },
-            '0852': { lat: 3.5952, lng: 98.6722, city: 'Medan', radius: 6, address: 'Polonia, Medan' },
-            '0853': { lat: -0.7893, lng: 100.6503, city: 'Padang', radius: 5, address: 'Pantai Padang, Padang' },
-            '0851': { lat: -0.0263, lng: 109.3425, city: 'Pontianak', radius: 7, address: 'Pontianak Kota' },
-            '0814': { lat: -6.2088, lng: 106.8456, city: 'Jakarta', radius: 3, address: 'Thamrin, Jakarta' },
-            '0815': { lat: -7.7956, lng: 110.3695, city: 'Yogyakarta', radius: 4, address: 'Malioboro, Yogyakarta' },
-            '0816': { lat: -7.0051, lng: 110.4381, city: 'Semarang', radius: 4, address: 'Simpang Lima, Semarang' },
-            '0855': { lat: -7.2575, lng: 112.7521, city: 'Surabaya', radius: 4, address: 'Rungkut, Surabaya' },
-            '0856': { lat: -8.6500, lng: 115.2167, city: 'Denpasar', radius: 3, address: 'Kuta, Bali' },
-            '0857': { lat: -7.9839, lng: 112.6214, city: 'Malang', radius: 4, address: 'Ijen, Malang' },
-            '0858': { lat: -8.6705, lng: 115.2126, city: 'Bali', radius: 5, address: 'Denpasar, Bali' },
-            '0817': { lat: -6.9147, lng: 107.6098, city: 'Bandung', radius: 4, address: 'Riau, Bandung' },
-            '0818': { lat: -6.2088, lng: 106.8456, city: 'Jakarta', radius: 3, address: 'SCBD, Jakarta' },
-            '0819': { lat: -7.7956, lng: 110.3695, city: 'Yogyakarta', radius: 4, address: 'UGM, Yogyakarta' },
-            '0859': { lat: -2.5489, lng: 140.3483, city: 'Jayapura', radius: 8, address: 'Jayapura Kota' },
-            '0877': { lat: -5.1477, lng: 119.4327, city: 'Makassar', radius: 5, address: 'Losari, Makassar' },
-            '0878': { lat: -0.0263, lng: 109.3425, city: 'Pontianak', radius: 6, address: 'Pontianak' },
-            '0879': { lat: 1.4927, lng: 124.8413, city: 'Manado', radius: 5, address: 'Manado Town Square' },
-            '0895': { lat: -7.0051, lng: 110.4381, city: 'Semarang', radius: 4, address: 'Banyumanik, Semarang' },
-            '0896': { lat: -7.2575, lng: 112.7521, city: 'Surabaya', radius: 4, address: 'Surabaya Pusat' },
-            '0897': { lat: -8.6500, lng: 115.2167, city: 'Denpasar', radius: 3, address: 'Sanur, Bali' },
-            '0898': { lat: 3.5952, lng: 98.6722, city: 'Medan', radius: 6, address: 'Medan Merdeka' },
-            '0899': { lat: -5.1477, lng: 119.4327, city: 'Makassar', radius: 5, address: 'Makassar Mall' },
-            '0881': { lat: -6.2088, lng: 106.8456, city: 'Jakarta', radius: 3, address: 'Jakarta Selatan' },
-            '0882': { lat: -7.2575, lng: 112.7521, city: 'Surabaya', radius: 4, address: 'Surabaya Barat' },
-            '0883': { lat: -6.9147, lng: 107.6098, city: 'Bandung', radius: 5, address: 'Setiabudi, Bandung' },
-            '0884': { lat: -7.7956, lng: 110.3695, city: 'Yogyakarta', radius: 4, address: 'Sleman, Yogyakarta' },
-            '0885': { lat: 3.5952, lng: 98.6722, city: 'Medan', radius: 6, address: 'Sun Plaza, Medan' },
-            '0886': { lat: -5.1477, lng: 119.4327, city: 'Makassar', radius: 5, address: 'Trans Studio, Makassar' },
-            '0887': { lat: -0.7893, lng: 100.6503, city: 'Padang', radius: 6, address: 'Padang Beach' },
-            '0888': { lat: -2.5489, lng: 140.3483, city: 'Jayapura', radius: 8, address: 'Jayapura' },
-            '0889': { lat: -8.6705, lng: 115.2126, city: 'Bali', radius: 5, address: 'Nusa Dua, Bali' },
-            '0831': { lat: -6.2088, lng: 106.8456, city: 'Jakarta', radius: 3, address: 'Kelapa Gading, Jakarta' },
-            '0832': { lat: -7.2575, lng: 112.7521, city: 'Surabaya', radius: 4, address: 'Galaxy Mall, Surabaya' },
-            '0833': { lat: -6.9147, lng: 107.6098, city: 'Bandung', radius: 5, address: 'Braga, Bandung' },
-            '0838': { lat: 3.5952, lng: 98.6722, city: 'Medan', radius: 6, address: 'Medan Fair' }
-        };
+        let cart = [];
+        let currentCategory = 'all';
 
-        let map = null;
-        let currentMarker = null;
-        let currentCircle = null;
-        let currentCoords = { lat: -6.2088, lng: 106.8456 };
-        let searchHistory = JSON.parse(localStorage.getItem('phoneHistory')) || [];
+        // Format Rupiah
+        function formatRupiah(number) {
+            return 'Rp ' + number.toLocaleString('id-ID');
+        }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const input = document.getElementById('phone-input');
-            input.addEventListener('input', formatPhoneInput);
-            input.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') trackNumber();
-            });
+        // Update Clock
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('date').textContent = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Render Products
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             
-            if (searchHistory.length > 0) renderHistory();
+            const filtered = products.filter(p => {
+                const matchesCategory = currentCategory === 'all' || p.category === currentCategory;
+                const matchesSearch = p.name.toLowerCase().includes(searchTerm);
+                return matchesCategory && matchesSearch;
+            });
+
+            grid.innerHTML = filtered.map(product => `
+                <div class="product-card" onclick="addToCart(${product.id})">
+                    <div class="product-image">${product.emoji}</div>
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-price">${formatRupiah(product.price)}</div>
+                    <div class="product-stock">Stok: ${product.stock}</div>
+                </div>
+            `).join('');
+        }
+
+        // Category Filter
+        document.getElementById('categoryFilter').addEventListener('click', (e) => {
+            if (e.target.classList.contains('category-btn')) {
+                document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                currentCategory = e.target.dataset.category;
+                renderProducts();
+            }
         });
 
-        function formatPhoneInput(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 4 && value.length <= 8) {
-                value = value.slice(0, 4) + '-' + value.slice(4);
-            } else if (value.length > 8) {
-                value = value.slice(0, 4) + '-' + value.slice(4, 8) + '-' + value.slice(8, 12);
-            }
-            e.target.value = value;
-        }
+        // Search
+        document.getElementById('searchInput').addEventListener('input', renderProducts);
 
-        function showToast(message, type = 'error') {
-            const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toast-message');
-            const icon = toast.querySelector('i');
-            
-            toast.className = `toast ${type}`;
-            toastMessage.textContent = message;
-            
-            icon.className = type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
+        // Add to Cart
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            const existingItem = cart.find(item => item.id === productId);
 
-        function initMap(lat, lng, radius) {
-            if (map) map.remove();
-
-            map = L.map('map', {
-                center: [lat, lng],
-                zoom: 14,
-                zoomControl: true
-            });
-
-            const tileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-            L.tileLayer(tileUrl, {
-                maxZoom: 19,
-                subdomains: 'abcd'
-            }).addTo(map);
-
-            const customIcon = L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div class="marker-pin"></div><div class="pulse-ring"></div>`,
-                iconSize: [40, 40],
-                iconAnchor: [20, 40]
-            });
-
-            currentMarker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
-            
-            currentCircle = L.circle([lat, lng], {
-                color: '#EA4335',
-                fillColor: '#EA4335',
-                fillOpacity: 0.1,
-                radius: radius * 1000,
-                weight: 2,
-                dashArray: '5, 10'
-            }).addTo(map);
-
-            const popupContent = `
-                <div style="font-family: Space Grotesk; min-width: 200px;">
-                    <h3 style="margin: 0 0 10px 0; color: #EA4335; font-size: 16px;">
-                        <i class="fas fa-broadcast-tower"></i> Base Station
-                    </h3>
-                    <p style="margin: 5px 0; font-size: 13px; color: #ccc;">
-                        <strong>Radius:</strong> ${radius} km<br>
-                        <strong>Koordinat:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}<br>
-                        <strong>Status:</strong> <span style="color: #34A853;">Aktif</span>
-                    </p>
-                </div>
-            `;
-            
-            currentMarker.bindPopup(popupContent).openPopup();
-
-            // Update stats
-            document.getElementById('coverage-stat').textContent = radius + ' km';
-            document.getElementById('coord-stat').textContent = lat.toFixed(4);
-            document.getElementById('lng-stat').textContent = lng.toFixed(4);
-            
-            const signals = ['-65 dBm', '-75 dBm', '-85 dBm', '-95 dBm'];
-            document.getElementById('signal-stat').textContent = signals[Math.floor(Math.random() * signals.length)];
-        }
-
-        function updateGoogleMapsLinks(lat, lng, address) {
-            currentCoords = { lat, lng };
-            
-            // Google Maps View
-            const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-            document.getElementById('gmaps-view').href = gmapsUrl;
-            
-            // Directions
-            document.getElementById('gmaps-directions').href = 
-                `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-            
-            // Street View
-            document.getElementById('gmaps-street').href = 
-                `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`;
-            
-            // Preview iframe (static map)
-            const staticMapUrl = `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
-            document.getElementById('gmaps-frame').src = staticMapUrl;
-            
-            // Update address
-            document.getElementById('location-address').textContent = address || 'Lokasi Base Station';
-            
-            // Update embed modal
-            const embedUrl = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966!2d${lng}!3d${lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjbCsDEyJzMxLjciTiAxMDbCsDUwJzQ0LjIiRQ!5e0!3m2!1sen!2sid!4v1600000000000!5m2!1sen!2sid`;
-            document.getElementById('embed-preview').src = staticMapUrl;
-            
-            const embedCode = `<iframe src="${staticMapUrl}" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>`;
-            document.getElementById('embed-code-text').textContent = embedCode;
-        }
-
-        function setMapType(type) {
-            document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`btn-${type}`).classList.add('active');
-            
-            if (map && currentMarker) {
-                const lat = currentMarker.getLatLng().lat;
-                const lng = currentMarker.getLatLng().lng;
-                const radius = parseInt(document.getElementById('coverage-stat').textContent);
-                initMap(lat, lng, radius);
-            }
-        }
-
-        function shareLocation() {
-            const { lat, lng } = currentCoords;
-            const shareData = {
-                title: 'Lokasi Base Station',
-                text: `Lokasi estimasi base station: ${lat}, ${lng}`,
-                url: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
-            };
-            
-            if (navigator.share) {
-                navigator.share(shareData);
-            } else {
-                navigator.clipboard.writeText(shareData.url);
-                showToast('Link lokasi disalin ke clipboard!', 'success');
-            }
-        }
-
-        function openEmbedModal() {
-            document.getElementById('embed-modal').classList.add('active');
-        }
-
-        function closeEmbedModal() {
-            document.getElementById('embed-modal').classList.remove('active');
-        }
-
-        function copyEmbedCode() {
-            const code = document.getElementById('embed-code-text').textContent;
-            navigator.clipboard.writeText(code);
-            showToast('Kode embed disalin!', 'success');
-        }
-
-        function trackNumber() {
-            const input = document.getElementById('phone-input');
-            const btn = document.querySelector('.btn-track');
-            let number = input.value.replace(/\D/g, '');
-            
-            if (!number) {
-                showToast('Silakan masukkan nomor telepon');
-                return;
-            }
-            
-            if (number.length < 10 || number.length > 13) {
-                showToast('Nomor telepon tidak valid (10-13 digit)');
-                return;
-            }
-            
-            btn.classList.add('loading');
-            document.getElementById('map-loading').classList.add('active');
-            
-            setTimeout(() => {
-                btn.classList.remove('loading');
-                processNumber(number);
-            }, 1500);
-        }
-
-        function processNumber(number) {
-            const formattedNumber = '+62 ' + number.slice(0, 4) + '-' + number.slice(4, 8) + '-' + number.slice(8);
-            document.getElementById('display-number').textContent = formattedNumber;
-            
-            const prefix = '0' + number.substring(0, 3);
-            let detectedProvider = null;
-            
-            for (const [key, provider] of Object.entries(providerData)) {
-                if (provider.prefixes.includes(prefix)) {
-                    detectedProvider = { key, ...provider };
-                    break;
+            if (existingItem) {
+                if (existingItem.quantity < product.stock) {
+                    existingItem.quantity++;
+                } else {
+                    alert('Stok tidak mencukupi!');
+                    return;
                 }
-            }
-            
-            const providerIcon = document.getElementById('provider-icon');
-            const providerName = document.getElementById('provider-name');
-            const prefixCode = document.getElementById('prefix-code');
-            const networkType = document.getElementById('network-type');
-            const region = document.getElementById('region');
-            const statusBadge = document.getElementById('status-badge');
-            
-            let coords = { lat: -6.2088, lng: 106.8456, city: 'Jakarta', radius: 5, address: 'Jakarta Pusat' };
-            
-            if (detectedProvider) {
-                providerIcon.className = `provider-icon ${detectedProvider.key}`;
-                providerIcon.innerHTML = `<i class="fas ${detectedProvider.icon}"></i>`;
-                providerName.textContent = detectedProvider.name;
-                prefixCode.textContent = prefix;
-                networkType.textContent = detectedProvider.network;
-                statusBadge.textContent = 'Tervalidasi';
-                statusBadge.className = 'badge';
-                
-                if (regionCoordinates[prefix]) {
-                    coords = regionCoordinates[prefix];
-                }
-                
-                region.textContent = coords.city;
-                updateRiskAssessment('low');
             } else {
-                providerIcon.className = 'provider-icon';
-                providerIcon.innerHTML = '<i class="fas fa-question"></i>';
-                providerName.textContent = 'Provider Tidak Dikenal';
-                prefixCode.textContent = prefix;
-                networkType.textContent = 'Tidak diketahui';
-                region.textContent = 'Tidak diketahui';
-                statusBadge.textContent = 'Tidak Tervalidasi';
-                statusBadge.className = 'badge warning';
-                updateRiskAssessment('medium');
+                cart.push({ ...product, quantity: 1 });
             }
-            
-            // Initialize maps
-            initMap(coords.lat, coords.lng, coords.radius);
-            updateGoogleMapsLinks(coords.lat, coords.lng, coords.address);
-            
-            document.getElementById('map-loading').classList.remove('active');
-            document.getElementById('results').classList.add('active');
-            
-            addToHistory(number, detectedProvider, coords.city);
-            
-            setTimeout(() => {
-                document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-            
-            showToast('Lokasi berhasil ditampilkan di Google Maps!', 'success');
+
+            renderCart();
+            updateCartSummary();
         }
 
-        function updateRiskAssessment(level) {
-            const riskFill = document.getElementById('risk-fill');
-            const riskText = document.getElementById('risk-text');
-            const riskIcon = document.getElementById('risk-icon');
+        // Render Cart
+        function renderCart() {
+            const container = document.getElementById('cartItems');
             
-            riskFill.className = `risk-fill ${level}`;
-            
-            if (level === 'low') {
-                riskText.textContent = 'Rendah (Aman)';
-                riskIcon.className = 'fas fa-shield-alt';
-                riskIcon.style.color = '#22c55e';
-            } else if (level === 'medium') {
-                riskText.textContent = 'Sedang (Waspada)';
-                riskIcon.className = 'fas fa-exclamation-triangle';
-                riskIcon.style.color = '#eab308';
-            } else {
-                riskText.textContent = 'Tinggi (Berisiko)';
-                riskIcon.className = 'fas fa-radiation';
-                riskIcon.style.color = '#ef4444';
-            }
-        }
-
-        function addToHistory(number, provider, city) {
-            const timestamp = new Date().toLocaleString('id-ID');
-            const historyItem = {
-                number: number,
-                provider: provider ? provider.name : 'Unknown',
-                icon: provider ? provider.icon : 'fa-question',
-                color: provider ? provider.color : '#64748b',
-                city: city,
-                time: timestamp
-            };
-            
-            searchHistory.unshift(historyItem);
-            if (searchHistory.length > 5) searchHistory.pop();
-            
-            localStorage.setItem('phoneHistory', JSON.stringify(searchHistory));
-            renderHistory();
-        }
-
-        function renderHistory() {
-            const historySection = document.getElementById('history-section');
-            const historyList = document.getElementById('history-list');
-            
-            if (searchHistory.length === 0) {
-                historySection.style.display = 'none';
-                return;
-            }
-            
-            historySection.style.display = 'block';
-            historyList.innerHTML = '';
-            
-            searchHistory.forEach((item) => {
-                const div = document.createElement('div');
-                div.className = 'history-item';
-                div.onclick = () => {
-                    document.getElementById('phone-input').value = item.number;
-                    trackNumber();
-                };
-                
-                div.innerHTML = `
-                    <div class="history-info">
-                        <div class="history-icon" style="background: ${item.color}20; color: ${item.color}">
-                            <i class="fas ${item.icon}"></i>
-                        </div>
-                        <div class="history-details">
-                            <h4>+62 ${item.number}</h4>
-                            <span>${item.provider} • ${item.city}</span>
-                        </div>
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-cart">
+                        <div class="empty-cart-icon">🛒</div>
+                        <p>Keranjang masih kosong</p>
+                        <small>Tap produk untuk menambahkan</small>
                     </div>
-                    <div class="history-time">${item.time}</div>
                 `;
-                
-                historyList.appendChild(div);
-            });
+                document.getElementById('checkoutBtn').disabled = true;
+                return;
+            }
+
+            container.innerHTML = cart.map(item => `
+                <div class="cart-item">
+                    <div class="cart-item-image">${item.emoji}</div>
+                    <div class="cart-item-details">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-price">${formatRupiah(item.price)}</div>
+                    </div>
+                    <div class="quantity-control">
+                        <button class="qty-btn" onclick="updateQuantity(${item.id}, -1)">−</button>
+                        <span class="qty-value">${item.quantity}</span>
+                        <button class="qty-btn" onclick="updateQuantity(${item.id}, 1)">+</button>
+                    </div>
+                    <div class="remove-item" onclick="removeFromCart(${item.id})">🗑️</div>
+                </div>
+            `).join('');
+
+            document.getElementById('checkoutBtn').disabled = false;
         }
 
-        // Close modal on outside click
-        window.onclick = function(event) {
-            const modal = document.getElementById('embed-modal');
-            if (event.target === modal) {
-                closeEmbedModal();
+        // Update Quantity
+        function updateQuantity(productId, change) {
+            const item = cart.find(i => i.id === productId);
+            const product = products.find(p => p.id === productId);
+
+            if (change > 0 && item.quantity >= product.stock) {
+                alert('Stok tidak mencukupi!');
+                return;
+            }
+
+            item.quantity += change;
+            
+            if (item.quantity <= 0) {
+                removeFromCart(productId);
+            } else {
+                renderCart();
+                updateCartSummary();
             }
         }
+
+        // Remove from Cart
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            renderCart();
+            updateCartSummary();
+        }
+
+        // Clear Cart
+        function clearCart() {
+            if (cart.length === 0) return;
+            if (confirm('Yakin ingin mengosongkan keranjang?')) {
+                cart = [];
+                renderCart();
+                updateCartSummary();
+                document.getElementById('paymentInput').value = '';
+                document.getElementById('changeDisplay').classList.remove('show');
+            }
+        }
+
+        // Update Cart Summary
+        function updateCartSummary() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const tax = subtotal * 0.1;
+            const total = subtotal + tax;
+
+            document.getElementById('cartCount').textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('subtotal').textContent = formatRupiah(subtotal);
+            document.getElementById('tax').textContent = formatRupiah(tax);
+            document.getElementById('total').textContent = formatRupiah(total);
+
+            calculateChange();
+        }
+
+        // Calculate Change
+        function calculateChange() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const tax = subtotal * 0.1;
+            const total = subtotal + tax;
+            const payment = parseFloat(document.getElementById('paymentInput').value) || 0;
+            const change = payment - total;
+
+            const changeDisplay = document.getElementById('changeDisplay');
+            const changeAmount = document.getElementById('changeAmount');
+
+            if (payment > 0) {
+                changeDisplay.classList.add('show');
+                if (change >= 0) {
+                    changeDisplay.style.background = 'var(--success)';
+                    changeAmount.textContent = formatRupiah(change);
+                    document.getElementById('checkoutBtn').disabled = false;
+                } else {
+                    changeDisplay.style.background = 'var(--danger)';
+                    changeAmount.textContent = 'Kurang ' + formatRupiah(Math.abs(change));
+                    document.getElementById('checkoutBtn').disabled = true;
+                }
+            } else {
+                changeDisplay.classList.remove('show');
+                document.getElementById('checkoutBtn').disabled = cart.length === 0;
+            }
+        }
+
+        // Process Checkout
+        function processCheckout() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const tax = subtotal * 0.1;
+            const total = subtotal + tax;
+            const payment = parseFloat(document.getElementById('paymentInput').value) || 0;
+
+            if (payment < total) {
+                alert('Pembayaran tidak mencukupi!');
+                return;
+            }
+
+            // Show Receipt
+            showReceipt();
+        }
+
+        // Show Receipt
+        function showReceipt() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const tax = subtotal * 0.1;
+            const total = subtotal + tax;
+            const payment = parseFloat(document.getElementById('paymentInput').value) || 0;
+            const change = payment - total;
+
+            document.getElementById('receiptDate').textContent = new Date().toLocaleString('id-ID');
+            document.getElementById('receiptNumber').textContent = 'TRX-' + Date.now().toString().slice(-6);
+            
+            document.getElementById('receiptItems').innerHTML = cart.map(item => `
+                <div class="receipt-item">
+                    <span class="receipt-item-name">${item.name}</span>
+                    <span class="receipt-item-qty">${item.quantity}x</span>
+                    <span class="receipt-item-price">${formatRupiah(item.price * item.quantity)}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('receiptSubtotal').textContent = formatRupiah(subtotal);
+            document.getElementById('receiptTax').textContent = formatRupiah(tax);
+            document.getElementById('receiptTotal').textContent = formatRupiah(total);
+            document.getElementById('receiptPayment').textContent = formatRupiah(payment);
+            document.getElementById('receiptChange').textContent = formatRupiah(change);
+
+            document.getElementById('receipt').classList.add('show');
+        }
+
+        // Close Receipt
+        function closeReceipt() {
+            document.getElementById('receipt').classList.remove('show');
+            
+            // Clear cart after successful transaction
+            cart = [];
+            renderCart();
+            updateCartSummary();
+            document.getElementById('paymentInput').value = '';
+            document.getElementById('changeDisplay').classList.remove('show');
+            
+            // Show success modal
+            document.getElementById('successModal').classList.add('show');
+        }
+
+        // Print Receipt
+        function printReceipt() {
+            window.print();
+        }
+
+        // Close Modal
+        function closeModal() {
+            document.getElementById('successModal').classList.remove('show');
+        }
+
+        // Initialize
+        renderProducts();
     </script>
 </body>
 </html>
